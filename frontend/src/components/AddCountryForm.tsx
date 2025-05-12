@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { ADD_COUNTRY, GET_CONTINENTS, GET_COUNTRIES } from "../api/queries";
-import type { ContinentsQuery, Country } from "../types";
+import { ADD_COUNTRY, GET_COUNTRIES } from "../api/queries";
+import type { Country } from "../types";
+import { CONTINENTS } from "../data/continents";
 
 type AddCountryFormProps = {
     onComplete?: () => void;
@@ -25,12 +26,10 @@ export function AddCountryForm({ onComplete }: AddCountryFormProps) {
     const [name, setName] = useState("");
     const [code, setCode] = useState("");
     const [emoji, setEmoji] = useState("");
-    const [continent, setContinent] = useState<string | null>(null);
+    const [continent, setContinent] = useState<string>("none");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [success, setSuccess] = useState<string | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
-
-    const { data: continentsData } = useQuery<ContinentsQuery>(GET_CONTINENTS);
 
     const [addCountry, { loading }] = useMutation(ADD_COUNTRY, {
         update(cache, { data: { addCountry } }) {
@@ -47,7 +46,7 @@ export function AddCountryForm({ onComplete }: AddCountryFormProps) {
             setName("");
             setCode("");
             setEmoji("");
-            setContinent(null);
+            setContinent("none");
             setErrors({});
             setSuccess("Le pays a bien été ajouté !");
             setSubmitError(null);
@@ -92,7 +91,7 @@ export function AddCountryForm({ onComplete }: AddCountryFormProps) {
                     name,
                     code,
                     emoji,
-                    continent: !continent || continent === "none" ? undefined : continent,
+                    continent: continent === "none" ? undefined : { id: Number(continent) },
                 },
             },
         });
@@ -151,19 +150,17 @@ export function AddCountryForm({ onComplete }: AddCountryFormProps) {
 
                         <div className="space-y-2">
                             <Label htmlFor="continent">Continent (Optional)</Label>
-                            <Select value={continent || ""} onValueChange={setContinent}>
+                            <Select value={continent} onValueChange={setContinent}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a continent" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
-                                    {continentsData?.continents.map(
-                                        (continent: import("../types").Continent) => (
-                                            <SelectItem key={continent.code} value={continent.code}>
-                                                {continent.name}
-                                            </SelectItem>
-                                        )
-                                    )}
+                                    {CONTINENTS.map((continent) => (
+                                        <SelectItem key={continent.id} value={String(continent.id)}>
+                                            {continent.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
